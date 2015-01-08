@@ -1,11 +1,12 @@
 # rules to overwrite
 0
 # number of defined interactions
-11
+12
 # type      type2       interaction
 Sr          shO         buckingham2    22656547.4020707 2.9686804215526  223038.860610 2.1
-Na          shO         buckingham2    14236888.4366118 3.2626427406199       0.0      2.0
-K           shO         buckingham2    11608000.6383414 2.7625835681529  122648.164297 2.0
+Na          shO         buckingham2    14236888.4366118 3.2626427406199       0.0      1.5
+Li          shO         buckingham2    38990442.1001561 4.488451215023        0.0      1.5
+K           shO         buckingham2    83263026.9664426 3.80423411256         0.0      1.5
 Fe          shO         buckingham2    12792822.0570904 3.0312215822976       0.0      2.0
 Ca          shO         buckingham2    12653567.82570   2.9095141             0.0      2.0
 Cs          shO         buckingham2    12362526.48209   2.5568908             0.0      2.0
