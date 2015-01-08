@@ -119,7 +119,7 @@ function MC_move {
     ./pdb2gin > /dev/null
     sed -i 's/sh    core/ O    shel/g' gin
     sed -i 's/sh   core/ O  shel/g' gin
-    cat gin.bottom >> gin
+    cat potentials.lib >> gin
     echo "optimise shell [ GULP ]"
     if [ $optimisate == "yes" ] ; then
      cat gin.top.opti.shell >  opti.gin
