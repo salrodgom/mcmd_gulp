@@ -1,14 +1,14 @@
 #! /bin/bash
 # dependencias:
-CPUs=8
+CPUs=24
 # RASPA, GULP
 loc=`pwd`
 objsMD=$loc/objsMD
 objsMC=$loc/objsMC
 #
 mc_cycles=10000
-md_cycles=100
-equi_cycles=100
+md_cycles=13000
+equi_cycles=12000
 #
 cation=$1
 ncation=$2
@@ -17,7 +17,7 @@ framework=$3
 pressure=0.0
 optimisate=yes
 n_mc=10
-n_md=10
+n_md=5
 RandomSeed='thu8jan18'
 function print_input_RASPA {
 let "movies_cycles = ncycles - 1"
@@ -44,7 +44,7 @@ CutOff                                          12.0
 ChargeMethod                                    Ewald
 EwaldPrecision                                  1e-10
 Framework  0
-FrameworkName                                   RHO_${framework}_$nal
+FrameworkName                                   RHO_${framework}_$nAl
 UnitCells                                       1 1 1
 ReplicaUnitCells                                1 1 1
 InputFileType                                   cif
