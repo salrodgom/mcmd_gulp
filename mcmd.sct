@@ -89,6 +89,7 @@ function MC_move {
    cp $objsMC/*.def .
    cp $objsMD/*.f90 .
    cp $objsMD/gin.* .
+   cp $objsMD/potentials.lib .
    cp ../RHO_${framework}_$nAl.cif .
    SimulationType=MC
    RestartFile=no
