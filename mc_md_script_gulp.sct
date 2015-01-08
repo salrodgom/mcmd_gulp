@@ -1,13 +1,13 @@
 #! /bin/bash
 # dependencias:
-CPUs=4
+CPUs=8
 # RASPA, GULP
 loc=`pwd`
 objsMD=$loc/objsMD
 objsMC=$loc/objsMC
 #
 mc_cycles=10000
-md_cycles=2000
+md_cycles=100
 equi_cycles=100
 #
 cation=$1
@@ -17,8 +17,10 @@ framework=$3
 pressure=0.0
 optimisate=yes
 n_mc=10
-RandomSeed=111111111
+n_md=10
+RandomSeed='thu8jan18'
 function print_input_RASPA {
+let "movies_cycles = ncycles - 1"
 echo "SimulationType             $SimulationType
 NumberOfCycles                   $ncycles
 NumberOfInitializationCycles     $inicialization
@@ -27,31 +29,32 @@ NumberOfEquilibrationCycles      $equilibration
 RestartFile                      $RestartFile
 PrintEvery                       100
 Movies                           yes
-WriteMoviesEvery                 $ncycles
+WriteMoviesEvery                 $movies_cycles
 #
 RemoveAtomNumberCodeFromLabel    yes
 UseChargesFromCIFFile            no
-#
 RemoveBondNeighboursFromLongRangeInteraction    yes
-RemoveBendNeighboursFromLongRangeInteraction    no
-RemoveTorsionNeighboursFromLongRangeInteraction no
+RemoveBendNeighboursFromLongRangeInteraction    yes
+RemoveTorsionNeighboursFromLongRangeInteraction yes
+InternalFrameworkLennardJonesInteractions       no
+Ensemble                         ${ensemble}
 #
 Forcefield                                      local
 CutOff                                          12.0
 ChargeMethod                                    Ewald
-EwaldPrecision                                  1e-8
+EwaldPrecision                                  1e-10
 Framework  0
-FrameworkName                                   RHO_${framework}_C1
+FrameworkName                                   RHO_${framework}_$nal
 UnitCells                                       1 1 1
+ReplicaUnitCells                                1 1 1
 InputFileType                                   cif
 #
-ExternalTemperature                             800.0
+ExternalTemperature                             $temp
 FlexibleFramework                               $FlexibleFramework
 FrameworkDefinitions                            local
-Ensemble                                        ${ensemble}
 #
 component 0  MoleculeName                     $cation
-             MoleculeDefinition               TraPPE
+             MoleculeDefinition               local
              ExtraFrameworkMolecule           yes
              TranslationProbability           1.0
              RandomTranslationProbability     1.0
@@ -61,7 +64,7 @@ function inicialization_sim {
   folder=ini
   mkdir $folder
   cd $folder
-   FrameworkName=RHO_${framework}_C1
+   FrameworkName=RHO_${framework}_$nAl
    cp $objsMC/*.def .
    cp $objsMC/$FrameworkName.cif .
    SimulationType=MC
@@ -80,16 +83,16 @@ function inicialization_sim {
   cd ..
 }
 function MC_move {
-  folder=MC_${i}${j}
+  folder=MC_${i}_${j}
   mkdir $folder
   cd $folder
    cp $objsMC/*.def .
    cp $objsMD/*.f90 .
    cp $objsMD/gin.* .
-   cp ../RHO_${framework}_C1.cif .
+   cp ../RHO_${framework}_$nAl.cif .
    SimulationType=MC
    RestartFile=no
-   FrameworkName=RHO_${framework}_C1
+   FrameworkName=RHO_${framework}_$nAl
    ncations=$ncation
    ncycles=$mc_cycles
    inicialization=1
@@ -105,7 +108,7 @@ function MC_move {
     head -n2 input.pdb > pdb.top
     tail -n1 input.pdb > pdb.bottom
     touch pdb.middle
-    for k in 'Si' 'Al' 'Na' 'K' 'Cs' 'Ca' 'Sr' 'Fe' 'O ' 'sh' ; do
+    for k in 'Si' 'Al' 'Li' 'Na' 'K' 'Cs' 'Ca' 'Sr' 'Fe' 'O ' 'sh' ; do
        grep "$k " input.pdb | grep 'ATOM' >> pdb.middle
        sed -i "/$k /d" input.pdb
     done
@@ -135,7 +138,7 @@ function choose_ener {
   energia=6006919099999.9
   confi=0
   for j in `seq 1 $n_mc` ; do
-      ener=`grep 'Current total potential energy:' ../MC_${i}${j}/Output/System_0/*.data | grep 'avg.' | tail -n1 | awk '{print $8}' | sed 's/)//g'`
+      ener=`grep 'Current total potential energy:' ../MC_${i}_${j}/Output/System_0/*.data | grep 'avg.' | tail -n1 | awk '{print $8}' | sed 's/)//g'`
       echo $j $ener
       if [ `echo "$ener < $energia" | bc -l` == 1 ] ; then
          confi=$j
@@ -155,7 +158,7 @@ function choose_boltz {
   echo $n_mc > choose_structure_mc.input
   echo $temp >> choose_structure_mc.input
   for j in `seq 1 $n_mc` ; do
-      ener=`grep 'Current total potential energy:' ../MC_${i}${j}/Output/System_0/*.data | grep 'avg.' | tail -n1 | awk '{print $8}' | sed 's/)//g'`
+      ener=`grep 'Current total potential energy:' ../MC_${i}_${j}/Output/System_0/*.data | grep 'avg.' | tail -n1 | awk '{print $8}' | sed 's/)//g'`
       echo "$j $ener" >> toto
   done
   sort -nk2 toto >> choose_structure_mc.input 
@@ -187,7 +190,7 @@ function choose_boltz_gulp {
 }
 #
 function MD_move {
-  timestep=0.0002
+  timestep=0.00025
   temp=$temperature
   ncycles=$md_cycles
   production=`echo "$timestep * $ncycles" | bc -l`
@@ -221,7 +224,8 @@ function MD_move {
      echo "Simulation wrong"
      touch ERROR
      confi=`echo $RANDOM % $n_mc + 1 | bc`
-     cp ../input_${i}${confi}.pdb input.pdb
+     cp ../gin.res.$i.$j gin.res
+     cp ../input_${i}_${confi}.pdb input.pdb
     fi
    done
   sed 's/md conp/single noenergy/g' md.res > res2cif.gin
@@ -229,33 +233,38 @@ function MD_move {
 #  -----------------------------------
   cp md.cif  out.cif
   cp out.cif out.cif.$i
-  for k in 'Na' 'K' 'Cs' 'Ca' 'Sr' 'Fe' ; do sed -i "/$k /d" out.cif ; done
-  cp out.cif ../RHO_${framework}_C1_$i.cif
-  cp out.cif ../RHO_${framework}_C1.cif
+  for k in 'Li' 'Na' 'K' 'Cs' 'Ca' 'Sr' 'Fe' ; do sed -i "/$k /d" out.cif ; done
+  cp out.cif ../RHO_${framework}_${nAl}_$i.cif
+  cp out.cif ../RHO_${framework}_${nAl}.cif
  cd ..
 }
 #
 function update {
   if [ -d RestartInitial ] ; then rm -R RestartInitial ; fi
   cp -R Restart RestartInitial
-  cp Movies/System_0/Framework_0_final_1_1_1_P1.cif ../RHO_${framework}_C1.cif
+  cp Movies/System_0/Framework_0_final_1_1_1_P1.cif ../RHO_${framework}_${nAl}.cif
 }
 #
 # MAIN
-# 
-folder=${cation}_${temperature}_${RandomSeed}_$framework
+#
+if [[ $cation = *sodium* ]] || [[ $cation = *lithium* ]] || [[ $cation == *potassium* ]] || [[ $cation == *caesium* ]] ; then
+   nAl=$ncation
+elif [[ $cation = *calcium* ]] || [[ $cation = *strontium* ]] || [[ $cation == *magnesium* ]] ; then
+   nAl=`echo "$ncation * 2.0" | bc -l | sed -e 's/\([0-9]\+\)\.[0-9]\+/\1/g'`
+else
+   nAl=$ncation
+fi 
+folder=${cation}_${temperature}_${RandomSeed}_${framework}_$nAl
 if [ ! -d $folder ] ; then
    mkdir $folder
    cd $folder
-   touch output.data
-   touch movie.pdb
    inicialization_sim
-   for i in `seq 1 1` ; do
+   for i in `seq 1 $n_md` ; do
        for j in `seq 1 $n_mc` ; do
         # montecarlo
         MC_move
        done
-       # molecular dynamics NPT
+       # molecular dynamics
        temp=$temperature
        MD_move
    done
