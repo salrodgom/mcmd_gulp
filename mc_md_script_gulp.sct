@@ -133,8 +133,6 @@ function MC_move {
 }
 function choose_ener {
   gfortran -O2 -march=native pdb2gin.f90 -o pdb2gin
-  gfortran -O2 -march=native gin2dlpoly.f90 -o gin2dlpoly
-  gfortran -O2 -march=native arc2cif.f90 -o arc2cif
   energia=6006919099999.9
   confi=0
   for j in `seq 1 $n_mc` ; do
@@ -150,8 +148,6 @@ function choose_ener {
 
 function choose_boltz {
   gfortran -O2 -march=native pdb2gin.f90 -o pdb2gin
-  gfortran -O2 -march=native gin2dlpoly.f90 -o gin2dlpoly
-  gfortran -O2 -march=native arc2cif.f90 -o arc2cif
   gfortran -O2 -march=native choose_structure_mc.f90 -o choose_structure_mc
   config=0
   rm choose_structure_mc.input toto
@@ -169,8 +165,6 @@ function choose_boltz {
   echo "Select: MC [ $confi ], [ $energia ]"
 }
 function choose_boltz_gulp {
-  gfortran -O2 -march=native gin2dlpoly.f90 -o gin2dlpoly
-  gfortran -O2 -march=native arc2cif.f90 -o arc2cif
   gfortran -O2 -march=native choose_structure_mc.f90 -o choose_structure_mc
   config=0
   rm choose_structure_mc.input toto
