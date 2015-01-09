@@ -96,7 +96,7 @@ function MC_move {
    temp=$temperature
    print_input_RASPA
    echo "MC Cycle $i$j [RASPA]"
-   sed -i '/sh0/d' RHO_${framework}_${nAl}.cif
+   sed -i '/shO/d' RHO_${framework}_${nAl}.cif
    simulate 
    cp Movies/System_0/Movie_*_allcomponents.pdb input.pdb
     gfortran -O2 -march=native pdb2gin.f90 -o pdb2gin
