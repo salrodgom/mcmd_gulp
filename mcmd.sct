@@ -6,7 +6,7 @@ loc=`pwd`
 objsMD=$loc/objsMD
 objsMC=$loc/objsMC
 #
-mc_cycles=10000
+mc_cycles=1000
 md_cycles=26000
 equi_cycles=24000
 #
@@ -16,8 +16,8 @@ temperature=$4
 framework=$3
 pressure=0.0
 optimisate=yes
-n_mc=10
-n_md=5
+n_mc=1
+n_md=1
 RandomSeed='fri9jan13'
 function print_input_RASPA {
 # input on RASPA
@@ -52,7 +52,7 @@ component 0  MoleculeName                     $cation
              MoleculeDefinition               local
              ExtraFrameworkMolecule           yes
              TranslationProbability           1.0
-             RandomTranslationProbability     2.0
+             RandomTranslationProbability     1.0
              CreateNumberOfMolecules          $ncations" > simulation.input
 }
 function inicialization_sim {
@@ -82,9 +82,7 @@ function MC_move {
   mkdir $folder
   cd $folder
    cp $objsMC/*.def .
-   cp $objsMD/*.f90 .
-   cp $objsMD/gin.* .
-   cp $objsMD/potentials.lib .
+   cp $objsMD/* .
    cp ../RHO_${framework}_$nAl.cif .
    SimulationType=MC
    RestartFile=no
@@ -98,34 +96,37 @@ function MC_move {
    print_input_RASPA
    echo "MC Cycle $i$j [RASPA]"
    sed -i '/shO/d' RHO_${framework}_${nAl}.cif
-   simulate 
-   cp Movies/System_0/Movie_*_allcomponents.pdb input.pdb
-    gfortran -O2 -march=native pdb2gin.f90 -o pdb2gin
-    echo "Sorting PDB"
-    head -n2 input.pdb > pdb.top
-    tail -n1 input.pdb > pdb.bottom
-    touch pdb.middle
-    for k in 'Si' 'Al' 'Li' 'Na' 'K' 'Cs' 'Ca' 'Sr' 'Fe' 'O ' 'sh' ; do
-       grep "$k " input.pdb | grep 'ATOM' >> pdb.middle
-       sed -i "/$k /d" input.pdb
-    done
-    cat pdb.top    >  input.pdb
-    cat pdb.middle >> input.pdb
-    cat pdb.bottom >> input.pdb
-    echo "PDB 2 gin"
-    ./pdb2gin > /dev/null
-    sed -i 's/sh    core/ O    shel/g' gin
-    sed -i 's/sh   core/ O  shel/g' gin
-    cat potentials.lib >> gin
-    echo "optimise shell [ GULP ]"
-    if [ $optimisate == "yes" ] ; then
-     cat gin.top.opti.shell >  opti.gin
-     cat gin                >> opti.gin
-     cat gin.bottom.opti    >> opti.gin
-     mpirun --np $CPUs gulp < opti.gin > opti.gout
-    fi
-    sleep 1
-    cp gin.res ../gin.res.$i.$j
+   simulate
+   sed '/MODEL    2/,$!d' Movies/System_0/Movie_*_allcomponents.pdb > c
+   sed 's/MODEL    2/MODEL    1/g' c > input.pdb
+   cp input.pdb ../input_${i}_${j}.pdb
+   rm c
+   gfortran -O2 -march=native pdb2gin.f90 -o pdb2gin
+   echo "Sorting PDB"
+   head -n2 input.pdb > pdb.top
+   tail -n1 input.pdb > pdb.bottom
+   touch pdb.middle
+   for k in 'Si' 'Al' 'Li' 'Na' 'K' 'Cs' 'Ca' 'Sr' 'Fe' 'O ' 'sh' ; do
+      grep "$k " input.pdb | grep 'ATOM' >> pdb.middle
+      sed -i "/$k /d" input.pdb
+   done
+   cat pdb.top    >  input.pdb
+   cat pdb.middle >> input.pdb
+   cat pdb.bottom >> input.pdb
+   echo "PDB 2 gin"
+   ./pdb2gin > /dev/null
+   sed -i 's/sh    core/ O    shel/g' gin
+   sed -i 's/sh   core/ O  shel/g' gin
+   cat potentials.lib >> gin
+   echo "optimise shell [ GULP ]"
+   if [ $optimisate == "yes" ] ; then
+    cat gin.top.opti.shell >  opti.gin
+    cat gin                >> opti.gin
+    cat gin.bottom.opti    >> opti.gin
+    mpirun --np $CPUs gulp < opti.gin > opti.gout
+   fi
+   sleep 1
+   cp gin.res ../gin.res.$i.$j
   cd ..
 }
 function choose_ener {
