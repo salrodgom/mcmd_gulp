@@ -7,8 +7,8 @@ objsMD=$loc/objsMD
 objsMC=$loc/objsMC
 #
 mc_cycles=10000
-md_cycles=13000
-equi_cycles=12000
+md_cycles=26000
+equi_cycles=24000
 #
 cation=$1
 ncation=$2
@@ -25,7 +25,6 @@ echo "SimulationType             $SimulationType
 NumberOfCycles                   $ncycles
 NumberOfInitializationCycles     $inicialization
 NumberOfEquilibrationCycles      $equilibration
-#RandomSeed                       $RandomSeed
 RestartFile                      $RestartFile
 PrintEvery                       100
 Movies                           yes
@@ -98,7 +97,7 @@ function MC_move {
    ncycles=$mc_cycles
    inicialization=1
    equilibration=1
-   FlexibleFramework=no
+   FlexibleFramework=yes
    temp=$temperature
    print_input_RASPA
    echo "MC Cycle $i$j [RASPA]"
@@ -185,7 +184,7 @@ function choose_boltz_gulp {
 }
 #
 function MD_move {
-  timestep=0.00025
+  timestep=0.0002
   temp=$temperature
   ncycles=$md_cycles
   production=`echo "$timestep * $ncycles" | bc -l`
