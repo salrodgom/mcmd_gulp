@@ -16,8 +16,8 @@ temperature=$4
 framework=$3
 pressure=0.0
 optimisate=yes
-n_mc=1
-n_md=1
+n_mc=10
+n_md=5
 RandomSeed='fri9jan13'
 function print_input_RASPA {
 # input on RASPA
