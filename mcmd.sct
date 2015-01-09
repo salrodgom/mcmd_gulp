@@ -29,7 +29,6 @@ RestartFile                      $RestartFile
 PrintEvery                       100
 Movies                           yes
 WriteMoviesEvery                 $movies_cycles
-#
 RemoveAtomNumberCodeFromLabel    yes
 UseChargesFromCIFFile            no
 RemoveBondNeighboursFromLongRangeInteraction    yes
@@ -37,7 +36,6 @@ RemoveBendNeighboursFromLongRangeInteraction    yes
 RemoveTorsionNeighboursFromLongRangeInteraction yes
 InternalFrameworkLennardJonesInteractions       no
 Ensemble                         ${ensemble}
-#
 Forcefield                                      local
 CutOff                                          12.0
 ChargeMethod                                    Ewald
@@ -45,18 +43,15 @@ EwaldPrecision                                  1e-10
 Framework  0
 FrameworkName                                   RHO_${framework}_$nAl
 UnitCells                                       1 1 1
-ReplicaUnitCells                                1 1 1
 InputFileType                                   cif
-#
 ExternalTemperature                             $temp
 FlexibleFramework                               $FlexibleFramework
 FrameworkDefinitions                            local
-#
 component 0  MoleculeName                     $cation
              MoleculeDefinition               local
              ExtraFrameworkMolecule           yes
              TranslationProbability           1.0
-             RandomTranslationProbability     1.0
+             RandomTranslationProbability     2.0
              CreateNumberOfMolecules          $ncations" > simulation.input
 }
 function inicialization_sim {
@@ -77,7 +72,7 @@ function inicialization_sim {
    temp=$temperature
    print_input_RASPA
    echo "inicialisation [RASPA]"
-   simulate > /dev/null
+   simulate
    update
   cd ..
 }
@@ -101,7 +96,8 @@ function MC_move {
    temp=$temperature
    print_input_RASPA
    echo "MC Cycle $i$j [RASPA]"
-   simulate > /dev/null
+   sed -i '/sh0/d' RHO_${framework}_${nAl}.cif
+   simulate 
    cp Movies/System_0/Movie_*_allcomponents.pdb input.pdb
     gfortran -O2 -march=native pdb2gin.f90 -o pdb2gin
     echo "Sorting PDB"
