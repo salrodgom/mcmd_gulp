@@ -32,6 +32,6 @@ PROGRAM average
       sd_v = sd_v + datos(4)*datos(4)*exp(-beta*(datos(2)-ener0))
  END DO do1
  average_v = average_v / partition
- sd_v = (sd_v / partition) - average_v*average_v
- WRITE(6,*)average_v,sd_v,(average_v/8.0)**(1.0/3.0)
+ sd_v = sqrt((sd_v / partition) - average_v*average_v)
+ WRITE(6,*)average_v,sd_v,(average_v/8.0)**(1.0/3.0),(sd_v/8.0)**(1/3.0)
 END PROGRAM average
